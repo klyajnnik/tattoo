@@ -132,27 +132,26 @@
             transition: background 0.3s, color 0.3s, border 0.3s;
         }
 
-        .edit-toggle {
+        /* Кнопка админ-панели */
+        .admin-toggle {
             padding: 6px 16px;
             border: none;
             border-radius: 8px;
             font-weight: 700;
             font-size: 13px;
             cursor: pointer;
-            background: var(--btn-primary);
+            background: var(--btn-danger);
             color: #fff;
             transition: background 0.2s, transform 0.1s;
         }
-        .edit-toggle:hover {
+        .admin-toggle:hover {
             background: var(--btn-primary-hover);
         }
-        .edit-toggle.active {
+        .admin-toggle.active {
             background: #4CAF50;
         }
-        .edit-toggle.locked {
-            background: var(--btn-danger);
-        }
 
+        /* Модальное окно пароля */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -160,8 +159,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -248,6 +247,14 @@
             display: none;
         }
         .modal-error.show {
+            display: block;
+        }
+
+        /* Скрытые настройки (видны только админу) */
+        .admin-only {
+            display: none;
+        }
+        .admin-only.visible {
             display: block;
         }
 
@@ -376,6 +383,7 @@
             cursor: pointer;
         }
 
+        /* Настройки — видны только админу */
         .settings-group {
             margin-bottom: 12px;
         }
@@ -548,6 +556,19 @@
             transition: background 0.3s, border 0.3s, color 0.3s;
         }
 
+        .admin-badge {
+            display: none;
+            background: #4CAF50;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .admin-badge.visible {
+            display: inline-block;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 18px;
@@ -593,19 +614,25 @@
 
 <div class="container">
 
+    <!-- ============================================================
+    МОДАЛЬНОЕ ОКНО ДЛЯ ПАРОЛЯ
+    ============================================================ -->
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box">
-            <h2>🔒 Требуется пароль</h2>
-            <p>Введите пароль администратора для входа в режим редактирования</p>
+            <h2>🔒 Административная панель</h2>
+            <p>Введите пароль для доступа к настройкам</p>
             <input type="password" id="passwordInput" placeholder="Введите пароль" autofocus />
             <div class="modal-error" id="passwordError">❌ Неверный пароль. Попробуйте снова.</div>
             <div class="modal-actions">
-                <button class="btn-modal-confirm" id="modalConfirm">✅ Подтвердить</button>
+                <button class="btn-modal-confirm" id="modalConfirm">✅ Войти</button>
                 <button class="btn-modal-cancel" id="modalCancel">❌ Отмена</button>
             </div>
         </div>
     </div>
 
+    <!-- ============================================================
+    ШАПКА
+    ============================================================ -->
     <header class="header">
         <h1>💉 Калькулятор стоимости тату</h1>
         <div class="header-controls">
@@ -615,12 +642,17 @@
                 <option value="dark">Тёмная</option>
                 <option value="warm">Тёплая</option>
             </select>
-            <button class="edit-toggle locked" id="editToggle">🔒 Режим редактирования: ВЫКЛ</button>
+            <button class="admin-toggle" id="adminToggle">🔒 Админ-панель</button>
+            <span class="admin-badge" id="adminBadge">👑 Админ</span>
         </div>
     </header>
 
+    <!-- ============================================================
+    ГЛАВНАЯ СЕТКА
+    ============================================================ -->
     <div class="grid-2">
 
+        <!-- ЛЕВАЯ КОЛОНКА — ОСНОВНЫЕ ПАРАМЕТРЫ -->
         <div class="card">
             <div class="card-title">📝 Основные параметры</div>
 
@@ -667,31 +699,55 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title">⚙️ Настройки <span class="badge" id="editStatus">🔒 Режим редактирования: ВЫКЛЮЧЕН</span></div>
+        <!-- ПРАВАЯ КОЛОНКА — НАСТРОЙКИ (СКРЫТЫ ОТ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ) -->
+        <div class="card admin-only" id="adminPanel">
+            <div class="card-title">⚙️ Администрирование <span class="badge" id="adminStatus">🔒 ЗАКРЫТО</span></div>
+
+            <div style="margin-bottom:12px; padding:10px; background:var(--result-bg); border-radius:8px; border:1px solid var(--card-border);">
+                <p style="font-size:13px; color:var(--label);">
+                    🔐 Здесь вы можете изменить цены и множители. 
+                    <strong>Внимание:</strong> изменения применяются локально 
+                    и не сохраняются на сервер автоматически. 
+                    Для сохранения отредактируйте файл 
+                    <code>settings.json</code> на GitHub вручную.
+                </p>
+            </div>
 
             <div class="settings-group">
-                <span class="subtitle">💰 Цены за см² (стили) — загружено с сервера</span>
+                <span class="subtitle">💰 Цены за см² (стили)</span>
                 <div id="stylePrices"></div>
             </div>
 
             <div class="settings-group">
-                <span class="subtitle">📊 Множители сложности — загружено с сервера</span>
+                <span class="subtitle">📊 Множители сложности</span>
                 <div id="complexityPrices"></div>
             </div>
 
             <div class="settings-group">
-                <span class="subtitle">➕ Цены доп. услуг — загружено с сервера</span>
+                <span class="subtitle">➕ Цены доп. услуг</span>
                 <div id="extraPrices"></div>
             </div>
 
             <div class="settings-actions">
-                <button class="btn-apply" id="applySettingsBtn" disabled>🔄 Применить</button>
+                <button class="btn-apply" id="applySettingsBtn" disabled>🔄 Применить локально</button>
                 <button class="btn-reset" id="resetDefaultsBtn" disabled>📥 Сбросить по умолчанию</button>
+            </div>
+
+            <div style="margin-top:12px; padding:10px; background:var(--result-bg); border-radius:8px; border:1px solid var(--card-border);">
+                <p style="font-size:12px; color:var(--label); opacity:0.7;">
+                    💡 <strong>Как сохранить настройки для всех:</strong><br>
+                    1. После применения нажмите <strong>"Скачать настройки"</strong><br>
+                    2. Отредактируйте файл <code>settings.json</code> на GitHub<br>
+                    3. Загрузите обновлённый файл в репозиторий
+                </p>
+                <button onclick="downloadSettings()" style="margin-top:6px; padding:6px 16px; border:none; border-radius:6px; background:var(--btn-primary); color:white; font-weight:600; cursor:pointer;">📥 Скачать settings.json</button>
             </div>
         </div>
     </div>
 
+    <!-- ============================================================
+    РЕЗУЛЬТАТ
+    ============================================================ -->
     <div class="card">
         <div class="card-title">📊 Результат расчёта</div>
         <div class="result-area">
@@ -743,9 +799,8 @@
     };
 
     let settings = {};
-    let editMode = false;
-    let currentTheme = 'light';
     let isAdmin = false;
+    let currentTheme = 'light';
 
     // ============================================================
     // ЗАГРУЗКА НАСТРОЕК С СЕРВЕРА (GitHub)
@@ -824,6 +879,7 @@
             extraContainer.appendChild(row);
         }
 
+        // Обновляем чекбоксы
         document.querySelectorAll('#extrasGroup input[type="checkbox"]').forEach(cb => {
             const service = cb.dataset.service;
             const price = settings.extras[service] || 0;
@@ -831,6 +887,47 @@
             if (label) {
                 label.textContent = `${service} (+${price.toLocaleString()} ₽)`;
                 label.prepend(cb);
+            }
+        });
+    }
+
+    // ============================================================
+    // УПРАВЛЕНИЕ АДМИН-ПАНЕЛЬЮ (с паролем)
+    // ============================================================
+
+    function toggleAdmin() {
+        if (isAdmin) {
+            // Выход из админ-режима
+            isAdmin = false;
+            document.getElementById('adminToggle').textContent = '🔒 Админ-панель';
+            document.getElementById('adminToggle').className = 'admin-toggle';
+            document.getElementById('adminBadge').classList.remove('visible');
+            document.getElementById('adminPanel').classList.remove('visible');
+            document.getElementById('adminStatus').textContent = '🔒 ЗАКРЫТО';
+            document.getElementById('adminStatus').style.color = 'var(--btn-danger)';
+            updateStatus('🔒 Выход из админ-панели');
+            return;
+        }
+
+        // Запрос пароля
+        showPasswordModal(function(success) {
+            if (success) {
+                isAdmin = true;
+                document.getElementById('adminToggle').textContent = '🔓 Выйти из админ-панели';
+                document.getElementById('adminToggle').className = 'admin-toggle active';
+                document.getElementById('adminBadge').classList.add('visible');
+                document.getElementById('adminPanel').classList.add('visible');
+                document.getElementById('adminStatus').textContent = '🔓 ОТКРЫТО';
+                document.getElementById('adminStatus').style.color = '#4CAF50';
+                
+                // Разблокируем поля
+                document.querySelectorAll('.settings-row input').forEach(el => el.disabled = false);
+                document.getElementById('applySettingsBtn').disabled = false;
+                document.getElementById('resetDefaultsBtn').disabled = false;
+                
+                updateStatus('🔓 Админ-панель открыта');
+            } else {
+                updateStatus('🔒 Доступ запрещён');
             }
         });
     }
@@ -852,7 +949,6 @@
         const confirmHandler = function() {
             const pass = input.value;
             if (pass === ADMIN_PASSWORD) {
-                isAdmin = true;
                 modal.classList.remove('active');
                 if (callback) callback(true);
             } else {
@@ -884,60 +980,12 @@
     }
 
     // ============================================================
-    // ПЕРЕКЛЮЧЕНИЕ РЕЖИМА РЕДАКТИРОВАНИЯ
-    // ============================================================
-
-    function toggleEditMode() {
-        if (editMode) {
-            setEditMode(false);
-            return;
-        }
-        if (isAdmin) {
-            setEditMode(true);
-            return;
-        }
-        showPasswordModal(function(success) {
-            if (success) {
-                setEditMode(true);
-            } else {
-                updateStatus('🔒 Доступ запрещён. Неверный пароль');
-            }
-        });
-    }
-
-    function setEditMode(state) {
-        editMode = state;
-        const btn = document.getElementById('editToggle');
-        const status = document.getElementById('editStatus');
-        const inputs = document.querySelectorAll('.settings-row input');
-        const actionBtns = document.querySelectorAll('.settings-actions button');
-
-        if (editMode) {
-            btn.textContent = '🔓 Режим редактирования: ВКЛ';
-            btn.className = 'edit-toggle active';
-            status.textContent = '🔓 Режим редактирования: ВКЛЮЧЕН';
-            status.style.color = '#4CAF50';
-            inputs.forEach(el => el.disabled = false);
-            actionBtns.forEach(el => el.disabled = false);
-            updateStatus('🔓 Режим редактирования включён');
-        } else {
-            btn.textContent = '🔒 Режим редактирования: ВЫКЛ';
-            btn.className = 'edit-toggle locked';
-            status.textContent = '🔒 Режим редактирования: ВЫКЛЮЧЕН';
-            status.style.color = 'var(--btn-danger)';
-            inputs.forEach(el => el.disabled = true);
-            actionBtns.forEach(el => el.disabled = true);
-            updateStatus('🔒 Режим редактирования выключен');
-        }
-    }
-
-    // ============================================================
-    // ПРИМЕНЕНИЕ НАСТРОЕК
+    // ПРИМЕНЕНИЕ НАСТРОЕК (ЛОКАЛЬНО)
     // ============================================================
 
     function applySettingsFromUI() {
-        if (!editMode) {
-            alert('Включите режим редактирования для изменения настроек');
+        if (!isAdmin) {
+            alert('Доступ запрещён. Войдите в админ-панель.');
             return;
         }
         try {
@@ -955,25 +1003,47 @@
             });
             
             localStorage.setItem('tattoo_settings', JSON.stringify(settings));
-            updateStatus('✅ Настройки применены и сохранены в кэше');
             renderSettings();
             calculate();
+            updateStatus('✅ Настройки применены локально (только для вас)');
         } catch (_) {
             alert('Введите корректные числовые значения');
         }
     }
 
+    // ============================================================
+    // СКАЧИВАНИЕ НАСТРОЕК
+    // ============================================================
+
+    function downloadSettings() {
+        if (!isAdmin) {
+            alert('Доступ запрещён. Войдите в админ-панель.');
+            return;
+        }
+        const blob = new Blob([JSON.stringify(settings, null, 2)], {type: 'application/json'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'settings.json';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        updateStatus('📥 Настройки скачаны');
+    }
+
+    // ============================================================
+    // СБРОС НАСТРОЕК ПО УМОЛЧАНИЮ
+    // ============================================================
+
     function resetDefaults() {
-        if (!editMode) {
-            alert('Включите режим редактирования');
+        if (!isAdmin) {
+            alert('Доступ запрещён. Войдите в админ-панель.');
             return;
         }
         if (!confirm('Сбросить все настройки по умолчанию?')) return;
         settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         localStorage.setItem('tattoo_settings', JSON.stringify(settings));
         renderSettings();
-        updateStatus('📥 Настройки сброшены по умолчанию');
         calculate();
+        updateStatus('📥 Настройки сброшены по умолчанию');
     }
 
     // ============================================================
@@ -1066,7 +1136,7 @@
     }
 
     // ============================================================
-    // СБРОС
+    // СБРОС ВСЕХ ПАРАМЕТРОВ
     // ============================================================
 
     function resetAll() {
@@ -1139,7 +1209,7 @@
             setTheme(this.value);
         });
 
-        document.getElementById('editToggle').addEventListener('click', toggleEditMode);
+        document.getElementById('adminToggle').addEventListener('click', toggleAdmin);
         document.getElementById('applySettingsBtn').addEventListener('click', applySettingsFromUI);
         document.getElementById('resetDefaultsBtn').addEventListener('click', resetDefaults);
         document.getElementById('calcBtn').addEventListener('click', calculate);
@@ -1153,12 +1223,11 @@
             document.getElementById('areaDisplay').textContent = `Площадь: ${(w * h).toFixed(1)} см²`;
         });
         document.getElementById('heightInput').addEventListener('input', () => {
-            const w = parseFloat(document.getElementById('widthInput').value) || 0;
+            const w = parseFloat(document.getElementById('heightInput').value) || 0;
             const h = parseFloat(document.getElementById('heightInput').value) || 0;
             document.getElementById('areaDisplay').textContent = `Площадь: ${(w * h).toFixed(1)} см²`;
         });
 
-        // Загружаем настройки с сервера
         await loadSettingsFromGitHub();
         renderSettings();
         calculate();
