@@ -66,9 +66,6 @@
             --shadow: 0 4px 6px rgba(139,94,52,0.12);
         }
 
-        /* ============================================================
-           ОБЩИЕ СТИЛИ
-           ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -89,9 +86,6 @@
             margin: 0 auto;
         }
 
-        /* ============================================================
-           ЗАГОЛОВОК
-           ============================================================ */
         .header {
             display: flex;
             justify-content: space-between;
@@ -159,9 +153,6 @@
             background: var(--btn-danger);
         }
 
-        /* ============================================================
-           МОДАЛЬНОЕ ОКНО ДЛЯ ПАРОЛЯ
-           ============================================================ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -260,9 +251,6 @@
             display: block;
         }
 
-        /* ============================================================
-           ОСТАЛЬНЫЕ СТИЛИ (без изменений)
-           ============================================================ */
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -453,13 +441,6 @@
             cursor: not-allowed;
         }
 
-        .btn-save {
-            background: var(--btn-success);
-        }
-        .btn-save:hover:not(:disabled) {
-            background: var(--btn-primary-hover);
-        }
-
         .btn-apply {
             background: var(--btn-primary);
         }
@@ -612,9 +593,6 @@
 
 <div class="container">
 
-    <!-- ============================================================
-    МОДАЛЬНОЕ ОКНО ДЛЯ ПАРОЛЯ
-    ============================================================ -->
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box">
             <h2>🔒 Требуется пароль</h2>
@@ -628,9 +606,6 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    ШАПКА
-    ============================================================ -->
     <header class="header">
         <h1>💉 Калькулятор стоимости тату</h1>
         <div class="header-controls">
@@ -644,12 +619,8 @@
         </div>
     </header>
 
-    <!-- ============================================================
-    ГЛАВНАЯ СЕТКА
-    ============================================================ -->
     <div class="grid-2">
 
-        <!-- ЛЕВАЯ КОЛОНКА — ОСНОВНЫЕ ПАРАМЕТРЫ -->
         <div class="card">
             <div class="card-title">📝 Основные параметры</div>
 
@@ -696,58 +667,37 @@
             </div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА — НАСТРОЙКИ -->
         <div class="card">
             <div class="card-title">⚙️ Настройки <span class="badge" id="editStatus">🔒 Режим редактирования: ВЫКЛЮЧЕН</span></div>
 
             <div class="settings-group">
-                <span class="subtitle">💰 Цены за см² (стили)</span>
+                <span class="subtitle">💰 Цены за см² (стили) — загружено с сервера</span>
                 <div id="stylePrices"></div>
             </div>
 
             <div class="settings-group">
-                <span class="subtitle">📊 Множители сложности</span>
+                <span class="subtitle">📊 Множители сложности — загружено с сервера</span>
                 <div id="complexityPrices"></div>
             </div>
 
             <div class="settings-group">
-                <span class="subtitle">➕ Цены доп. услуг</span>
+                <span class="subtitle">➕ Цены доп. услуг — загружено с сервера</span>
                 <div id="extraPrices"></div>
             </div>
 
             <div class="settings-actions">
-                <button class="btn-save" id="saveSettingsBtn" disabled>💾 Сохранить настройки</button>
                 <button class="btn-apply" id="applySettingsBtn" disabled>🔄 Применить</button>
                 <button class="btn-reset" id="resetDefaultsBtn" disabled>📥 Сбросить по умолчанию</button>
             </div>
         </div>
     </div>
 
-    <!-- ============================================================
-    РЕЗУЛЬТАТ
-    ============================================================ -->
     <div class="card">
         <div class="card-title">📊 Результат расчёта</div>
         <div class="result-area">
-            <pre id="resultOutput">═══════════════════════════════════════════
-   💉 РАСЧЁТ СТОИМОСТИ ТАТУ   
-═══════════════════════════════════════════
-
-📏 Размер: 5.0 × 5.0 см
-📐 Площадь: 25.0 см²
-
-🎨 Стиль: Черно-белое
-   Цена за см²: 1 500 ₽
-   Стоимость: 25.0 × 1 500 = 37 500 ₽
-
-⚡ Сложность: Средняя (×1.3)
-   Стоимость с учётом сложности: 37 500 × 1.3 = 48 750 ₽
-
-──────────────────────────────────────────
-💰 ИТОГОВАЯ СТОИМОСТЬ: 48 750 ₽
-──────────────────────────────────────────</pre>
+            <pre id="resultOutput">⏳ Загрузка настроек...</pre>
         </div>
-        <div class="total-big" id="totalDisplay">ИТОГО: 48 750 ₽</div>
+        <div class="total-big" id="totalDisplay">ИТОГО: 0 ₽</div>
 
         <div class="action-bar">
             <button class="btn-calc" id="calcBtn">🧮 РАССЧИТАТЬ</button>
@@ -756,17 +706,17 @@
             <button class="btn-exit" id="exitBtn">❌ Выход</button>
         </div>
 
-        <div class="status-bar" id="statusBar">✅ Готов к работе</div>
+        <div class="status-bar" id="statusBar">🔄 Загрузка...</div>
     </div>
 
 </div>
 
 <script>
     // ============================================================
-    // ДАННЫЕ И НАСТРОЙКИ
+    // ДАННЫЕ
     // ============================================================
 
-    const ADMIN_PASSWORD = 'Пороль';  // ← ПАРОЛЬ АДМИНИСТРАТОРА
+    const ADMIN_PASSWORD = 'Пороль';
 
     const DEFAULT_SETTINGS = {
         styles: {
@@ -792,37 +742,42 @@
         }
     };
 
-    let settings = loadSettings();
+    let settings = {};
     let editMode = false;
     let currentTheme = 'light';
-    let isAdmin = false;          // флаг: введён ли пароль
-    let pendingEditMode = false;  // нужно ли включить редактирование после ввода пароля
+    let isAdmin = false;
 
     // ============================================================
-    // РАБОТА С НАСТРОЙКАМИ (localStorage)
+    // ЗАГРУЗКА НАСТРОЕК С СЕРВЕРА (GitHub)
     // ============================================================
 
-    function loadSettings() {
+    async function loadSettingsFromGitHub() {
         try {
-            const raw = localStorage.getItem('tattoo_settings');
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                for (const key of ['styles', 'complexity', 'extras']) {
-                    if (!parsed[key]) parsed[key] = DEFAULT_SETTINGS[key];
-                    for (const subKey of Object.keys(DEFAULT_SETTINGS[key])) {
-                        if (!(subKey in parsed[key])) parsed[key][subKey] = DEFAULT_SETTINGS[key][subKey];
-                    }
-                }
-                return parsed;
+            const response = await fetch('settings.json');
+            if (!response.ok) throw new Error('Файл не найден');
+            const data = await response.json();
+            
+            if (data.styles && data.complexity && data.extras) {
+                settings = data;
+                localStorage.setItem('tattoo_settings', JSON.stringify(settings));
+                updateStatus('✅ Настройки загружены с сервера (GitHub)');
+                return true;
+            } else {
+                throw new Error('Неверная структура файла');
             }
-        } catch (_) { /* ignore */ }
-        return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    }
-
-    function saveSettingsToStorage() {
-        try {
-            localStorage.setItem('tattoo_settings', JSON.stringify(settings));
-        } catch (_) { /* ignore */ }
+        } catch (error) {
+            const cached = localStorage.getItem('tattoo_settings');
+            if (cached) {
+                try {
+                    settings = JSON.parse(cached);
+                    updateStatus('⚠️ Используются локальные настройки (кэш)');
+                    return true;
+                } catch (_) {}
+            }
+            settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+            updateStatus('⚠️ Используются настройки по умолчанию');
+            return false;
+        }
     }
 
     // ============================================================
@@ -838,6 +793,7 @@
             row.innerHTML = `
                 <label>${name}:</label>
                 <input type="number" class="style-price" data-style="${name}" value="${price}" step="100" min="0" disabled />
+                <span style="font-size:12px;color:var(--label);opacity:0.5;">₽</span>
             `;
             styleContainer.appendChild(row);
         }
@@ -850,6 +806,7 @@
             row.innerHTML = `
                 <label>${name}:</label>
                 <input type="number" class="comp-price" data-comp="${name}" value="${mult}" step="0.1" min="0.1" disabled />
+                <span style="font-size:12px;color:var(--label);opacity:0.5;">×</span>
             `;
             compContainer.appendChild(row);
         }
@@ -862,9 +819,20 @@
             row.innerHTML = `
                 <label>${name}:</label>
                 <input type="number" class="extra-price" data-extra="${name}" value="${price}" step="100" min="0" disabled />
+                <span style="font-size:12px;color:var(--label);opacity:0.5;">₽</span>
             `;
             extraContainer.appendChild(row);
         }
+
+        document.querySelectorAll('#extrasGroup input[type="checkbox"]').forEach(cb => {
+            const service = cb.dataset.service;
+            const price = settings.extras[service] || 0;
+            const label = cb.closest('label');
+            if (label) {
+                label.textContent = `${service} (+${price.toLocaleString()} ₽)`;
+                label.prepend(cb);
+            }
+        });
     }
 
     // ============================================================
@@ -881,7 +849,6 @@
         input.value = '';
         input.focus();
 
-        // Обработчики
         const confirmHandler = function() {
             const pass = input.value;
             if (pass === ADMIN_PASSWORD) {
@@ -900,11 +867,8 @@
             if (callback) callback(false);
         };
 
-        // Убираем старые обработчики, чтобы не накапливались
         const newConfirm = document.getElementById('modalConfirm');
         const newCancel = document.getElementById('modalCancel');
-
-        // Клонируем кнопки, чтобы сбросить события
         const confirmClone = newConfirm.cloneNode(true);
         const cancelClone = newCancel.cloneNode(true);
         newConfirm.parentNode.replaceChild(confirmClone, newConfirm);
@@ -917,30 +881,21 @@
             if (e.key === 'Enter') confirmHandler();
             if (e.key === 'Escape') cancelHandler();
         });
-
-        // Сохраняем ссылки для очистки
-        window._modalConfirm = confirmHandler;
-        window._modalCancel = cancelHandler;
     }
 
     // ============================================================
-    // ПЕРЕКЛЮЧЕНИЕ РЕЖИМА РЕДАКТИРОВАНИЯ (С ПАРОЛЕМ)
+    // ПЕРЕКЛЮЧЕНИЕ РЕЖИМА РЕДАКТИРОВАНИЯ
     // ============================================================
 
     function toggleEditMode() {
-        // Если уже в режиме редактирования — просто выключаем
         if (editMode) {
             setEditMode(false);
             return;
         }
-
-        // Если пароль уже введён — включаем сразу
         if (isAdmin) {
             setEditMode(true);
             return;
         }
-
-        // Иначе запрашиваем пароль
         showPasswordModal(function(success) {
             if (success) {
                 setEditMode(true);
@@ -998,21 +953,14 @@
                 const val = parseFloat(el.value);
                 if (val >= 0) settings.extras[el.dataset.extra] = val;
             });
-            saveSettingsToStorage();
-            updateStatus('✅ Настройки применены');
+            
+            localStorage.setItem('tattoo_settings', JSON.stringify(settings));
+            updateStatus('✅ Настройки применены и сохранены в кэше');
+            renderSettings();
             calculate();
         } catch (_) {
             alert('Введите корректные числовые значения');
         }
-    }
-
-    function saveSettingsToFile() {
-        if (!editMode) {
-            alert('Включите режим редактирования');
-            return;
-        }
-        applySettingsFromUI();
-        alert('✅ Настройки сохранены в localStorage!');
     }
 
     function resetDefaults() {
@@ -1022,7 +970,7 @@
         }
         if (!confirm('Сбросить все настройки по умолчанию?')) return;
         settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-        saveSettingsToStorage();
+        localStorage.setItem('tattoo_settings', JSON.stringify(settings));
         renderSettings();
         updateStatus('📥 Настройки сброшены по умолчанию');
         calculate();
@@ -1184,20 +1132,16 @@
     // ИНИЦИАЛИЗАЦИЯ
     // ============================================================
 
-    function init() {
-        renderSettings();
+    async function init() {
         loadTheme();
-
+        
         document.getElementById('themeSelect').addEventListener('change', function() {
             setTheme(this.value);
         });
 
         document.getElementById('editToggle').addEventListener('click', toggleEditMode);
-
-        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettingsToFile);
         document.getElementById('applySettingsBtn').addEventListener('click', applySettingsFromUI);
         document.getElementById('resetDefaultsBtn').addEventListener('click', resetDefaults);
-
         document.getElementById('calcBtn').addEventListener('click', calculate);
         document.getElementById('reportBtn').addEventListener('click', saveReport);
         document.getElementById('resetAllBtn').addEventListener('click', resetAll);
@@ -1214,8 +1158,11 @@
             document.getElementById('areaDisplay').textContent = `Площадь: ${(w * h).toFixed(1)} см²`;
         });
 
+        // Загружаем настройки с сервера
+        await loadSettingsFromGitHub();
+        renderSettings();
         calculate();
-        updateStatus('✅ Готов к работе | Режим редактирования: ВЫКЛЮЧЕН');
+        updateStatus('✅ Готов к работе');
     }
 
     document.addEventListener('DOMContentLoaded', init);
